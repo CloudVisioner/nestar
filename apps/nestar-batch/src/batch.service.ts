@@ -8,14 +8,14 @@ import { Model } from 'mongoose';
 
 @Injectable()
 export class BatchService {
-	constructor(
+	constructor( // Used to query/update DB, models
 		@InjectModel('Property') private readonly propertyModel: Model<Property>,
 		@InjectModel('Member') private readonly memberModel: Model<Member>,
 	) {}
 
 	public async batchRollerback(): Promise<void> {
 		await this.propertyModel
-			.updateMany(
+			.updateMany( // Start ranking from scratch every minute
 				{
 					propertyStatus: PropertyStatus.ACTIVE,
 				},

@@ -11,7 +11,7 @@ export class BatchController {
 	@Timeout(1000)
 	handleTimeout() {
 		this.logger.debug('BATCH SERVER READY');
-	}
+	} // runs once to confirm batch ser is avlive
 
 	@Cron('00 * * * * *', { name: BATCH_ROLLBACK })
 	public async batchRollback() {
@@ -22,7 +22,7 @@ export class BatchController {
 		this.logger['context'] = BATCH_ROLLBACK;
 		this.logger.debug('EXECUTED');
 		await this.batchService.batchRollerback();
-	}
+	} // runs every minute in 0
 
 	@Cron('20 * * * * *', { name: BATCH_TOP_PROPERTIES })
 	public async batchTopProperties() {
@@ -33,7 +33,7 @@ export class BatchController {
 		} catch (err) {
 			this.logger.error(err);
 		}
-	}
+	} // runs every minute in 20
 
 	@Cron('40 * * * * *', { name: BATCH_TOP_AGENTS })
 	public async batchTopAgents() {
@@ -44,5 +44,5 @@ export class BatchController {
 		} catch (err) {
 			this.logger.error(err);
 		}
-	}
+	} // runs every minute in 20
 }

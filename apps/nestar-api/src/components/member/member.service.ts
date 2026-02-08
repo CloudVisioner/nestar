@@ -70,7 +70,7 @@ export class MemberService {
 					_id: memberId,
 					memberStatus: MemberStatus.ACTIVE,// filter
 				},
-				input, // projection 
+				input, // update 
 				{ new: true }, // option
 			)
 			.exec();
