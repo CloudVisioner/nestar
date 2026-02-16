@@ -62,18 +62,17 @@ export class AgentsInquiry {
 	limit: number;
 
 	@IsOptional()
-	@IsIn(availableAgentSorts)
+	@IsIn(['createdAt', 'updatedAt', 'memberLikes', 'memberViews', 'memberRank'])
 	@Field(() => String, { nullable: true })
 	sort?: string;
 
 	@IsOptional()
-	@IsIn(availableAgentSorts)
 	@Field(() => Direction, { nullable: true })
 	direction?: Direction;
 
-	@IsNotEmpty()
-	@Field(() => AISearch)
-	search: AISearch;
+	@IsOptional()
+	@Field(() => AISearch, { nullable: true })
+	search?: AISearch;
 }
 
 @InputType()

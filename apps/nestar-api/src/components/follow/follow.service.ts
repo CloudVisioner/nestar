@@ -52,10 +52,12 @@ export class FollowService {
 		const targetMember = await this.memberService.getMember(null, followingId);
 		if (!targetMember) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
-		const result = await this.followModel.findOneAndDelete({
-			followingId: followingId,
-			followerId: followerId,
-		});
+		const result = await this.followModel
+			.findOneAndDelete({
+				followingId: followingId,
+				followerId: followerId,
+			})
+			.exec();
 		if (!result) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
 		await this.memberService.memberStatsEditor({
@@ -72,7 +74,8 @@ export class FollowService {
 		return result;
 	}
 
-	public async getMemberFollowings(memberId: ObjectId, input: FollowInquiry): Promise<Followings> { // this user's followings.
+	public async getMemberFollowings(memberId: ObjectId, input: FollowInquiry): Promise<Followings> {
+		// this user's followings.
 		const { page, limit, search } = input;
 		if (!search?.followerId) throw new InternalServerErrorException(Message.BAD_REQUEST); // stop if follower id is not provided.
 		const match: T = { followerId: search?.followerId };
