@@ -1,35 +1,74 @@
 import { Logger } from '@nestjs/common';
-import { OnGatewayInit, SubscribeMessage, WebSocketGateway } from '@nestjs/websockets';
+import { OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { info } from 'console';
 import { Server } from 'ws';
+import * as WebSocket from 'ws';
+
+interface MessagePayload {
+	event: string;
+	text: string;
+}
+
+interface InfoPayload {
+	event: string;
+	totalClients: number;
+}
 
 @WebSocketGateway({ transports: ['websocket'], secure: false }) // Uses ws://, not wss://, no http, but ws
 export class SocketGateway implements OnGatewayInit {
 	private logger: Logger = new Logger('SocketEventsGateway'); // tagging log, name
 	private summaryClient: number = 0; // track how many clients are connected
 
+	@WebSocketServer()
+	server: Server;
+
 	public afterInit(server: Server) {
-		this.logger.log(`WebSocket Server Initialized total: ${this.summaryClient}`);
+		this.logger.verbose(`WebSocket Server Initialized total: ${this.summaryClient}`);
 	} // runs after server starts
 
-  handleConnection(client: WebSocket, ...args: any[]) { // args extra info like header, IP, req info
-    this.summaryClient++;
-    this.logger.log(`== Client connected total: ${this.summaryClient} ==`)
-  } // runs every time a clients connects
+	handleConnection(client: WebSocket, ...args: any[]) {
+		this.summaryClient++;
+		this.logger.verbose(`Connection & total [${this.summaryClient}]`);
 
-    handleDisconnect(client: WebSocket) {
-    this.summaryClient--;
-    this.logger.log(`== Client disconnected total: ${this.summaryClient} ==`)
-  } // track disconnection
+		const infoMsg: InfoPayload = {
+			event: 'info',
+			totalClients: this.summaryClient,
+		};
+		this.emitMessage(infoMsg);
+	}
+
+	handleDisconnect(client: WebSocket) {
+		this.summaryClient--;
+		this.logger.verbose(`Disconnection & total [${this.summaryClient}]`);
+
+		const infoMsg: InfoPayload = {
+			event: 'info',
+			totalClients: this.summaryClient,
+		};
+		this.broadcastMessage(client, infoMsg);
+	}
 
 	@SubscribeMessage('message')
-	handleMessage(client: any, payload: any): string {
-		return 'Hello world!';
-	} // if event message is called, return hello world
-}
+	public async handleMessage(client: WebSocket, payload: string): Promise<void> {
+		const newMessage: MessagePayload = { event: 'message', text: payload };
 
-// Use WebSockets when you need:
-// Chat apps
-// Live notifications
-// Online users count
-// Real-time dashboards
-// Multiplayer games
+		this.logger.verbose(`NEW MESSAGE: ${payload}`);
+		this.emitMessage(newMessage);
+	}
+
+	private broadcastMessage(sender: WebSocket, message: InfoPayload | MessagePayload) {
+		this.server.clients.forEach((client) => {
+			if (client !== sender && client.readyState === WebSocket.OPEN) {
+				client.send(JSON.stringify(message));
+			}
+		});
+	}
+
+	private emitMessage(message: InfoPayload | MessagePayload) {
+		this.server.clients.forEach((client) => {
+			if (client.readyState === WebSocket.OPEN) {
+				client.send(JSON.stringify(message));
+			}
+		});
+	}
+}
